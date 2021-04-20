@@ -4,6 +4,7 @@ import com.joyyir.bithumb_miner.domain.Balance;
 import com.joyyir.bithumb_miner.domain.CurrencyType;
 import com.joyyir.bithumb_miner.domain.OrderBook;
 import com.joyyir.bithumb_miner.domain.OrderDetail;
+import com.joyyir.bithumb_miner.domain.PlaceType;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -11,7 +12,8 @@ import org.springframework.boot.test.context.SpringBootTest;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 @SpringBootTest
 class BithumbRepositoryTest {
@@ -44,16 +46,9 @@ class BithumbRepositoryTest {
 
     @Test
     void marketSell() {
-        String orderId = tradeRepository.marketSell(new BigDecimal("0.0005"), CurrencyType.BTC, CurrencyType.KRW);
+        String orderId = tradeRepository.marketSell(new BigDecimal("10"), CurrencyType.XRP, CurrencyType.KRW);
         System.out.println(orderId);
         assertTrue(!orderId.isEmpty()); // C0101000000333534992
-    }
-
-    @Test
-    void marketBuy() {
-        String orderId = tradeRepository.marketBuy(new BigDecimal("1"), CurrencyType.BTC, CurrencyType.KRW);
-        System.out.println(orderId);
-        assertTrue(!orderId.isEmpty()); // C0101000000333534322
     }
 
     @Test
@@ -72,5 +67,11 @@ class BithumbRepositoryTest {
     void getOrderBook() {
         OrderBook orderBook = orderBookRepository.getOrderBook(CurrencyType.BTC, CurrencyType.KRW);
         System.out.println(orderBook);
+    }
+
+    @Test
+    void place() {
+        tradeRepository.place(PlaceType.BUY, CurrencyType.XRP, CurrencyType.KRW, 1650, new BigDecimal("8"));
+//        tradeRepository.place(PlaceType.SELL, CurrencyType.XRP, CurrencyType.KRW, 1500, new BigDecimal("10"));
     }
 }

@@ -9,12 +9,17 @@ import java.math.BigDecimal;
 
 @SpringBootTest
 class MiningServiceIntegrationTest {
+
     @Autowired
     private MiningService miningService;
 
     @Test
     void mining() {
-        this.miningService.mining(CurrencyType.BTC, new BigDecimal("50000"));
-//        this.miningService.marketSell(CurrencyType.BTC, new BigDecimal("0.0001"));
+        this.miningService.mining(CurrencyType.XRP, new BigDecimal("9220"));
+    }
+
+    @Test
+    void marketSell() {
+        this.miningService.marketSell(CurrencyType.BTC, new BigDecimal("0.0004"));
     }
 }

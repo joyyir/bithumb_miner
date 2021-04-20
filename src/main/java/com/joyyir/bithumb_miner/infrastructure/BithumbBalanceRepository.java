@@ -4,8 +4,7 @@ import com.joyyir.bithumb_miner.domain.Balance;
 import com.joyyir.bithumb_miner.domain.BalanceRepository;
 import com.joyyir.bithumb_miner.domain.CurrencyType;
 import com.joyyir.bithumb_miner.infrastructure.dto.BalanceResponseDTO;
-import com.joyyir.bithumb_miner.infrastructure.util.Encryptor;
-import com.joyyir.bithumb_miner.infrastructure.util.HTTPUtil;
+import com.joyyir.bithumb_miner.infrastructure.util.BithumbUtil;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.ResponseEntity;
@@ -36,23 +35,11 @@ public class BithumbBalanceRepository implements BalanceRepository {
     @Override
     public Balance getBalance(CurrencyType currency) {
         final String endpoint = END_POINT_BALANCE;
-        final String nonce = String.valueOf(System.currentTimeMillis());
 
         MultiValueMap<String, String> params = new LinkedMultiValueMap<>();
         params.add("currency", currency == CurrencyType.KRW ? CurrencyType.BTC.getCode() : currency.getCode());
 
-        String strParams = HTTPUtil.paramsBuilder(params);
-        String encodedParams = HTTPUtil.encodeURIComponent(strParams);
-
-        String str = endpoint + ";" + encodedParams + ";" + nonce;
-
-        MultiValueMap<String, String> headers = new LinkedMultiValueMap<>();
-        headers.add("Api-Key", apiKey);
-        headers.add("Api-Sign", Encryptor.getHmacSha512(secretKey, str, Encryptor.EncodeType.BASE64));
-        headers.add("Api-Nonce", nonce);
-        headers.add("api-client-type", "2");
-
-        HttpEntity<MultiValueMap<String, String>> entity = new HttpEntity<>(params, headers);
+        HttpEntity<MultiValueMap<String, String>> entity = new HttpEntity<>(params, BithumbUtil.privateApiHeader(apiKey, secretKey, endpoint, params));
         ResponseEntity<BalanceResponseDTO> response = restTemplate.postForEntity(URL_PREFIX + endpoint, entity, BalanceResponseDTO.class);
         if (response.getBody() == null || !"0000".equals(response.getBody().getStatus())) {
             throw new RuntimeException("getBalance failed! status:" + (response.getBody() != null ? response.getBody().getStatus() : null));

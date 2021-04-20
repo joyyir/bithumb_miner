@@ -2,7 +2,8 @@ package com.joyyir.bithumb_miner.domain;
 
 public enum CurrencyType {
     KRW("KRW"),
-    BTC("BTC");
+    BTC("BTC"),
+    XRP("XRP");
 
     private String code;
 

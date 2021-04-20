@@ -4,6 +4,7 @@ import org.springframework.util.MultiValueMap;
 
 import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
+import java.util.Map;
 
 public class HTTPUtil {
 
@@ -13,6 +14,18 @@ public class HTTPUtil {
             builder.append(key);
             builder.append("=");
             builder.append(map.get(key).get(0));
+            builder.append("&");
+        }
+        builder.deleteCharAt(builder.length()-1);
+        return builder.toString();
+    }
+
+    public static String paramsBuilder(Map<String, String> map) {
+        StringBuilder builder = new StringBuilder();
+        for(String key : map.keySet()) {
+            builder.append(key);
+            builder.append("=");
+            builder.append(map.get(key));
             builder.append("&");
         }
         builder.deleteCharAt(builder.length()-1);

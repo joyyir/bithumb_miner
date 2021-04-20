@@ -8,18 +8,19 @@ import com.joyyir.bithumb_miner.domain.OrderBookRepository;
 import com.joyyir.bithumb_miner.domain.OrderDetail;
 import com.joyyir.bithumb_miner.domain.OrderRepository;
 import com.joyyir.bithumb_miner.domain.OrderStatus;
+import com.joyyir.bithumb_miner.domain.PlaceType;
 import com.joyyir.bithumb_miner.domain.TradeRepository;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
-import java.util.List;
 
 @Slf4j
 @Service
 public class MiningService {
-    private static final BigDecimal TRADE_FEE_RATIO = new BigDecimal("0.003"); // 0.3% (실제 수수료 0.25% + 혹시 모를 상황 대비용 0.05%)
+    private static final BigDecimal TRADE_FEE_RATIO = new BigDecimal("0.0025"); // 0.25%
+    private static final BigDecimal BUY_PRICE_BUFFER = new BigDecimal("0.005"); // 0.5%
     private final TradeRepository tradeRepository;
     private final BalanceRepository balanceRepository;
     private final OrderRepository orderRepository;
@@ -51,15 +52,20 @@ public class MiningService {
         log.info("현재 거래 가능한 잔고: {}원, 실제 거래할 잔고: {}원", krwBalance.getAvailable(), amountOfKrw);
 
         OrderBook orderBook = orderBookRepository.getOrderBook(buyCurrency, CurrencyType.KRW);
-        BigDecimal availableQuantity = getAvailableQuantity(amountOfKrw.multiply(BigDecimal.ONE.subtract(TRADE_FEE_RATIO)),
-                                                            orderBook.getAsks());
-        OrderDetail orderDetail = marketBuy(buyCurrency, availableQuantity); // 수수료 뺀 금액까지만 살 수 있다
+        BigDecimal marketBuyPrice = orderBook.getAsks()
+                                             .get(0)
+                                             .getPrice()
+                                             .multiply(BigDecimal.ONE.add(BUY_PRICE_BUFFER))
+                                             .setScale(0, RoundingMode.FLOOR);
+        BigDecimal availableQuantity = amountOfKrw.divide(BigDecimal.ONE.add(TRADE_FEE_RATIO), 8, RoundingMode.FLOOR)
+                                                  .divide(marketBuyPrice, 8, RoundingMode.FLOOR);
+        OrderDetail orderDetail = marketBuy(buyCurrency, availableQuantity, marketBuyPrice); // 수수료 뺀 금액까지만 살 수 있다
         marketSell(buyCurrency, orderDetail.getOrderQty()); // 팔고 나서 수수료가 빠진다
     }
 
-    private OrderDetail marketBuy(CurrencyType buyCurrency, BigDecimal quantity) {
-        String orderId = tradeRepository.marketBuy(quantity, buyCurrency, CurrencyType.KRW);
-        log.info("{}를 {}개 매수 주문을 올렸습니다.", buyCurrency.getCode(), quantity);
+    public OrderDetail marketBuy(CurrencyType buyCurrency, BigDecimal quantity, BigDecimal price) {
+        String orderId = tradeRepository.place(PlaceType.BUY, buyCurrency, CurrencyType.KRW, price.intValue(), quantity);
+        log.info("{}를 {}원에 {}개 매수 주문을 올렸습니다.", buyCurrency.getCode(), price, quantity);
         log.info("주문이 완료될 때까지 대기합니다.");
         OrderDetail orderDetail = null;
         for (int i = 0; i < 10; i++) {
@@ -67,12 +73,10 @@ public class MiningService {
             if (isOrderCompleted(orderDetail)) {
                 break;
             }
-            try {
-                Thread.sleep(1000L);
-            } catch (InterruptedException ignored) {}
+            sleep500ms();
         }
         if (!isOrderCompleted(orderDetail)) {
-            log.error("10초 동안에 주문이 완료되지 않았습니다. 빗썸 사이트에서 확인해주세요. 종료합니다.");
+            log.error("5초 동안에 주문이 완료되지 않았습니다. 빗썸 사이트에서 확인해주세요. 종료합니다.");
             throw new RuntimeException("시장가 매수 오류");
         }
         log.info("매수가 완료되었습니다. ({}개)", orderDetail.getOrderQty());
@@ -89,40 +93,23 @@ public class MiningService {
             if (isOrderCompleted(orderDetail)) {
                 break;
             }
-            try {
-                Thread.sleep(1000L);
-            } catch (InterruptedException ignored) {}
+            sleep500ms();
         }
         if (!isOrderCompleted(orderDetail)) {
-            log.error("10초 동안에 주문이 완료되지 않았습니다. 빗썸 사이트에서 확인해주세요. 종료합니다.");
+            log.error("5초 동안에 주문이 완료되지 않았습니다. 빗썸 사이트에서 확인해주세요. 종료합니다.");
             throw new RuntimeException("시장가 매도 오류");
         }
         log.info("매도가 완료되었습니다. ({}개)", orderDetail.getOrderQty());
         return orderDetail;
     }
 
-    public BigDecimal getAvailableQuantity(BigDecimal amountOfKrw, List<OrderBook.OrderBookItem> asks) {
-        BigDecimal tempAmountOfKrw = new BigDecimal(amountOfKrw.toString());
-        BigDecimal quantitySum = new BigDecimal(0);
-
-        for (OrderBook.OrderBookItem ask : asks) {
-            if (tempAmountOfKrw.compareTo(BigDecimal.ZERO) <= 0) {
-                break;
-            }
-
-            BigDecimal amount = ask.getPrice().multiply(ask.getQuantity());
-            if (tempAmountOfKrw.compareTo(amount) >= 0) { // tempAmountOfKrw >= amount
-                quantitySum = quantitySum.add(ask.getQuantity());
-                tempAmountOfKrw = tempAmountOfKrw.subtract(amount);
-            } else { // tempAmountOfKrw < amount
-                quantitySum = quantitySum.add(tempAmountOfKrw.divide(ask.getPrice(), 8, RoundingMode.FLOOR));
-                tempAmountOfKrw = new BigDecimal(0);
-            }
-        }
-        return quantitySum;
-    }
-
     private boolean isOrderCompleted(OrderDetail orderDetail) {
         return orderDetail != null && OrderStatus.COMPLETED.equals(orderDetail.getOrderStatus());
+    }
+
+    private void sleep500ms() {
+        try {
+            Thread.sleep(500L);
+        } catch (InterruptedException ignored) {}
     }
 }
