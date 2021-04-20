@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Bithumb Miner v1.0</title>
+</head>
+<body>
+    <h1>빗썸에서 채굴해서 돈 벌자</h1>
+    <form action="/mining" method="post">
+        <li>현금 최대 한도: <input type="text" name="maxKrw">원</li>
+        <li>
+            <label for="currency-type">살 코인: </label>
+            <select id="currency-type" name="currencyType">
+                <option value="BTC">BTC</option>
+                <option value="XRP">XRP</option>
+            </select>
+        </li>
+        <li>총 사이클 수 (1 사이클 = 1 매수 + 1 매도): <input type="text" name="cycleCount">번</li>
+        <input type="submit" value="start">
+    </form>
+</body>
+</html>

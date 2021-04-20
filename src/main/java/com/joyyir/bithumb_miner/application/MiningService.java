@@ -35,21 +35,26 @@ public class MiningService {
         this.orderBookRepository = orderBookRepository;
     }
 
-    public void mining(CurrencyType buyCurrency, BigDecimal maxAmountOfKrw) {
+    public void mining(CurrencyType buyCurrency, BigDecimal maxAmountOfKrw, int cycleCount) {
+        final long start = System.currentTimeMillis();
         Balance startKrwBalance = balanceRepository.getBalance(CurrencyType.KRW);
-        for (int i = 0; i < 5; i++) {
+        for (int i = 0; i < cycleCount; i++) {
             log.info("{}번째 사이클: 시작", i + 1);
             buyAndSellByMarketPrice(buyCurrency, maxAmountOfKrw);
             log.info("{}번째 사이클: 종료", i + 1);
+            log.info("------------------------------");
         }
         Balance finishKrwBalance = balanceRepository.getBalance(CurrencyType.KRW);
-        log.info("정상 종료. (최종 잔고: {}원. 차감된 금액: {}원)", finishKrwBalance.getTotal(), finishKrwBalance.getTotal().subtract(startKrwBalance.getTotal()));
+        log.info("정상 종료 (최종 잔고: {}원, 차감된 금액: {}원, 소요 시간: {}초)",
+                 finishKrwBalance.getTotal().setScale(0, RoundingMode.FLOOR),
+                 finishKrwBalance.getTotal().subtract(startKrwBalance.getTotal()).setScale(0, RoundingMode.FLOOR),
+                 (System.currentTimeMillis() - start) / 1000);
     }
 
     private void buyAndSellByMarketPrice(CurrencyType buyCurrency, BigDecimal maxAmountOfKrw) {
         Balance krwBalance = balanceRepository.getBalance(CurrencyType.KRW);
         BigDecimal amountOfKrw = krwBalance.getAvailable().compareTo(maxAmountOfKrw) < 0 ? krwBalance.getAvailable() : maxAmountOfKrw;
-        log.info("현재 거래 가능한 잔고: {}원, 실제 거래할 잔고: {}원", krwBalance.getAvailable(), amountOfKrw);
+        log.info("현재 거래 가능한 잔고: {}원, 실제 거래할 잔고: {}원", krwBalance.getAvailable().setScale(0, RoundingMode.FLOOR), amountOfKrw);
 
         OrderBook orderBook = orderBookRepository.getOrderBook(buyCurrency, CurrencyType.KRW);
         BigDecimal marketBuyPrice = orderBook.getAsks()
