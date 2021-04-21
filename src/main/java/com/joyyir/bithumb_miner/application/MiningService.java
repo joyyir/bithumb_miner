@@ -74,7 +74,7 @@ public class MiningService {
         log.info("{}를 {}원에 {}개 매수 주문을 올렸습니다.", buyCurrency.getCode(), price, quantity);
         log.info("주문이 완료될 때까지 대기합니다.");
         OrderDetail orderDetail = null;
-        for (int i = 0; i < 10; i++) {
+        for (int i = 0; i < 20; i++) {
             orderDetail = orderRepository.getOrderDetail(orderId, buyCurrency);
             if (isOrderCompleted(orderDetail)) {
                 break;
@@ -82,7 +82,7 @@ public class MiningService {
             sleep500ms();
         }
         if (!isOrderCompleted(orderDetail)) {
-            log.error("5초 동안에 주문이 완료되지 않았습니다. 빗썸 사이트에서 확인해주세요. 종료합니다.");
+            log.error("10초 동안에 주문이 완료되지 않았습니다. 빗썸 사이트에서 확인해주세요. 종료합니다.");
             throw new RuntimeException("시장가 매수 오류");
         }
         log.info("매수가 완료되었습니다. ({}개)", orderDetail.getOrderQty());
@@ -94,7 +94,7 @@ public class MiningService {
         log.info("{}를 {}개 매도 주문을 올렸습니다.", sellCurrency.getCode(), quantity);
         log.info("주문이 완료될 때까지 대기합니다.");
         OrderDetail orderDetail = null;
-        for (int i = 0; i < 10; i++) {
+        for (int i = 0; i < 20; i++) {
             orderDetail = orderRepository.getOrderDetail(orderId, sellCurrency);
             if (isOrderCompleted(orderDetail)) {
                 break;
@@ -102,7 +102,7 @@ public class MiningService {
             sleep500ms();
         }
         if (!isOrderCompleted(orderDetail)) {
-            log.error("5초 동안에 주문이 완료되지 않았습니다. 빗썸 사이트에서 확인해주세요. 종료합니다.");
+            log.error("10초 동안에 주문이 완료되지 않았습니다. 빗썸 사이트에서 확인해주세요. 종료합니다.");
             throw new RuntimeException("시장가 매도 오류");
         }
         log.info("매도가 완료되었습니다. ({}개)", orderDetail.getOrderQty());
