@@ -36,6 +36,7 @@ public class MiningService {
     }
 
     public void mining(CurrencyType buyCurrency, BigDecimal maxAmountOfKrw, int cycleCount) {
+        log.info("빗썸 채굴 레쓰끼릿!");
         final long start = System.currentTimeMillis();
         Balance startKrwBalance = balanceRepository.getBalance(CurrencyType.KRW);
         for (int i = 0; i < cycleCount; i++) {

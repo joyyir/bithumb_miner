@@ -15,7 +15,7 @@ class MiningServiceIntegrationTest {
 
     @Test
     void mining() {
-        this.miningService.mining(CurrencyType.XRP, new BigDecimal("9220"), 5);
+        this.miningService.mining(CurrencyType.BTC, new BigDecimal("7923"), 3);
     }
 
     @Test

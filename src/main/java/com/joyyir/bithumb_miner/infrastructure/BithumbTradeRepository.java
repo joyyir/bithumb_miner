@@ -57,7 +57,7 @@ public class BithumbTradeRepository implements TradeRepository {
 
         MultiValueMap<String, String> params = new LinkedMultiValueMap<>();
         params.add("units", units.setScale(4, RoundingMode.FLOOR).toString());
-        params.add("price", price.toString());
+        params.add("price", CurrencyType.BTC == orderCurrency ? String.valueOf(price - price % 1000) : price.toString());
         params.add("type", PlaceType.SELL == placeType ? "ask" : "bid");
         params.add("order_currency", orderCurrency.getCode());
         params.add("payment_currency", paymentCurrency.getCode());
