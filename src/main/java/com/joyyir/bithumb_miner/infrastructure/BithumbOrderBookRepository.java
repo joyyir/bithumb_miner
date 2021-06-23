@@ -29,7 +29,8 @@ public class BithumbOrderBookRepository implements OrderBookRepository {
                                                                                   OrderBookResponseDTO.class);
         OrderBookResponseDTO responseBody = response.getBody();
         if (responseBody == null || !"0000".equals(responseBody.getStatus())) {
-            throw new RuntimeException("getOrderBook failed! status:" + (responseBody != null ? responseBody.getStatus() : null));
+            throw new RuntimeException("getOrderBook failed! status:" + (responseBody != null ? responseBody.getStatus() : null)
+                                           + ", message: " + (response.getBody() != null ? response.getBody().getMessage() : null));
         }
         return new OrderBook(convert(responseBody.getData().getBids()),
                              convert(responseBody.getData().getAsks()));

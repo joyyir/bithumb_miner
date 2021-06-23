@@ -8,6 +8,7 @@ import java.util.List;
 @Data
 public class OrderBookResponseDTO {
     private String status;
+    private String message;
     private OrderBookDataDTO data;
 
     @Data
